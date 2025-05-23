@@ -136,7 +136,7 @@ def plot_ingresos_por_linea(df):
         height=400 + 20 * n_bars,
         template='plotly_white'
     )
-
+    fig.update_layout(showlegend=False)
     return fig
 
 def plot_distribucion_pago(df):
