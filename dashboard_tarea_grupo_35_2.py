@@ -27,7 +27,6 @@ Este dashboard permite explorar el desempeño comercial de una **cadena de tiend
 Analiza datos clave por tienda, línea de producto y preferencias de clientes.
 """)
 
-
 # ============================
 # 1. Cargar Datos
 # ============================
@@ -140,8 +139,6 @@ def plot_ingresos_por_linea(df):
 
     return fig
 
-
-
 def plot_distribucion_pago(df):
     payment_counts = df["Payment"].value_counts().reset_index()
     payment_counts.columns = ["Método de Pago", "Cantidad"]
@@ -184,7 +181,7 @@ def plot_rating_distribution(df):
     kde_vals = kde(x_vals)
     kde_trace = go.Scatter(
         x=x_vals,
-        y=kde_vals * len(ratings) * (x_max - x_min ) / 60,
+        y=kde_vals * len(ratings) * (x_max - x_min ) / 61,
         mode='lines',
         line=dict(color='#0d3d6b', width=2),
         name='KDE'
@@ -236,7 +233,32 @@ def plot_correlation_matrix(df):
     fig, ax = plt.subplots(figsize=(8,6))
     sns.heatmap(corr, annot=True, cmap='Blues', fmt='.2f', ax=ax)
     ax.set_title('Matriz de Correlación entre Variables Numéricas')
-    return fig   
+    return fig
+
+def plot_3d_scatter_sales(df):
+    # Agrupar por línea de producto y método de pago
+    grouped_df = df.groupby(['Product line', 'Payment']).agg({
+        'Unit price': 'mean',
+        'Quantity': 'mean',
+        'Total': 'sum'
+    }).reset_index()
+
+    # Crear un gráfico de dispersión 3D
+    fig = px.scatter_3d(
+        grouped_df, 
+        x='Unit price', 
+        y='Quantity', 
+        z='Total', 
+        color='Product line',
+        size='Total',
+        symbol='Payment',
+        opacity=0.7,
+        hover_data=['Product line', 'Payment'],
+        color_discrete_sequence=TONOS_AZUL
+    )
+    
+    fig.update_layout(title='Relación 3D entre Precio, Cantidad y Total de Ventas')
+    return fig
 
 # ============================
 # 4. Sistema de pestañas dinámico
@@ -251,10 +273,11 @@ graf_list = [
     ("Ratings", plot_rating_distribution),
     ("Costo vs Ingreso", plot_cogs_vs_gross_income),
     ("Tipo de Cliente", plot_gasto_tipo_cliente),
-    ("Correlaciones", plot_correlation_matrix)
+    ("Correlaciones", plot_correlation_matrix),
+    ("Análisis 3D de Ventas", plot_3d_scatter_sales)  # Nueva función añadida
 ]
 
-# Creamos las pestañas en base a la título
+# Creamos las pestañas en base al título
 tabs = st.tabs([titulo for titulo, _ in graf_list])
 
 # Genera todas las figuras antes
@@ -274,7 +297,7 @@ for i, (titulo, _) in enumerate(graf_list):
                 st.plotly_chart(fig_or_ax, use_container_width=True)
         except Exception as e:
             st.write(f"Error en {titulo}: {e}")
-            
+
 # finalmente, agregamos el footer
 st.markdown(
     """
